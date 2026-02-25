@@ -1,0 +1,42 @@
+[workspace]
+authors = ["gsk <guanshoukui@zhito.com>"]
+channels = ["conda-forge"]
+name = "my_mcap_demo"
+platforms = ["linux-64"]
+version = "0.1.0"
+
+# ── 公共依赖（所有环境共享） ──
+[dependencies]
+cmake = ">=3.20"
+cxx-compiler = ">=1.0"
+make = ">=4.0"
+git = ">=2.0"
+lz4-c = ">=1.9"
+zstd = ">=1.5"
+
+[tasks]
+
+# ── writer 环境：旧版 protobuf 3.x ──
+[feature.writer.dependencies]
+libprotobuf = ">=3.20,<4"
+
+# ── reader 环境：新版 protobuf 4.x+ ──
+[feature.reader.dependencies]
+libprotobuf = ">=4.25"
+
+# ── writer 任务 ──
+[feature.writer.tasks]
+configure-writer = "cmake -S writer -B build_writer -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release"
+build-writer = { cmd = "cmake --build build_writer -j$(nproc)", depends-on = ["configure-writer"] }
+write = { cmd = "./build_writer/mcap_writer", depends-on = ["build-writer"] }
+
+# ── reader 任务 ──
+[feature.reader.tasks]
+configure-reader = "cmake -S reader -B build_reader -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_BUILD_TYPE=Release"
+build-reader = { cmd = "cmake --build build_reader -j$(nproc)", depends-on = ["configure-reader"] }
+read = { cmd = "./build_reader/mcap_reader", depends-on = ["build-reader"] }
+
+# ── 环境定义 ──
+[environments]
+writer = ["writer"]
+reader = ["reader"]
