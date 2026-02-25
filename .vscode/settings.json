@@ -1,0 +1,7 @@
+{
+  "files.associations": {
+    "*.pb.txt": "prototxt",
+    "*.service": "bat",
+    "ostream": "cpp"
+  }
+}

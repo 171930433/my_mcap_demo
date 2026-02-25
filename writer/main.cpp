@@ -99,10 +99,7 @@ int main() {
       return 1;
     }
 
-    std::cout << "Wrote student: id=" << student.id()
-              << ", name=" << student.name() << ", age=" << student.age()
-              << ", email=" << student.email()
-              << ", score=" << student.score() << std::endl;
+    std::cout << student.DebugString() << std::endl;
   }
 
   writer.close();

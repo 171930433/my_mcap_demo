@@ -34,13 +34,7 @@ int main() {
       continue;
     }
 
-    std::cout << "Student #" << (count + 1) << ":" << std::endl;
-    std::cout << "  ID    : " << student.id() << std::endl;
-    std::cout << "  Name  : " << student.name() << std::endl;
-    std::cout << "  Age   : " << student.age() << std::endl;
-    std::cout << "  Email : " << student.email() << std::endl;
-    std::cout << "  Score : " << student.score() << std::endl;
-    std::cout << std::endl;
+    std::cout << student.DebugString() << std::endl;
 
     ++count;
   }

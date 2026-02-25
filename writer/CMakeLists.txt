@@ -9,6 +9,9 @@ find_package(Protobuf REQUIRED)
 message(STATUS "Protobuf version : ${Protobuf_VERSION}")
 message(STATUS "Protobuf protoc  : ${Protobuf_PROTOC_EXECUTABLE}")
 
+# ── 让 find_package(lz4) 能找到 conda-forge 的 lz4-c ──
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
+
 # ── 通过 FetchContent 引入 mcap_builder ──
 include(FetchContent)
 FetchContent_Declare(
