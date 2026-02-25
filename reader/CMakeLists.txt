@@ -27,11 +27,9 @@ FetchContent_Declare(
   GIT_REPOSITORY https://github.com/foxglove/foxglove-sdk.git
   GIT_TAG        main
   GIT_SHALLOW    TRUE
+  EXCLUDE_FROM_ALL
 )
-FetchContent_GetProperties(foxglove_schemas)
-if(NOT foxglove_schemas_POPULATED)
-  FetchContent_Populate(foxglove_schemas)
-endif()
+FetchContent_MakeAvailable(foxglove_schemas)
 
 # ── 从 proto 文件生成 C++ 源码 ──
 protobuf_generate_cpp(STUDENT_SRCS STUDENT_HDRS
