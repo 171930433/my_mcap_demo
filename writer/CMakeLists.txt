@@ -32,12 +32,11 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(foxglove_schemas)
 
 # ── 从 proto 文件生成 C++ 源码 ──
-protobuf_generate_cpp(STUDENT_SRCS STUDENT_HDRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/../proto/student.proto)
-protobuf_generate_cpp(POINT3_SRCS POINT3_HDRS
+protobuf_generate_cpp(
+  PROTO_SRCS PROTO_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../proto/student.proto
   ${foxglove_schemas_SOURCE_DIR}/schemas/proto/foxglove/Point3.proto)
 
 # ── 构建 writer 可执行文件 ──
-add_executable(mcap_writer main.cpp ${STUDENT_SRCS} ${POINT3_SRCS})
+add_executable(mcap_writer main.cpp ${PROTO_SRCS})
 target_include_directories(mcap_writer PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(mcap_writer PRIVATE mcap protobuf::libprotobuf)
