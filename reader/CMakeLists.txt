@@ -21,10 +21,25 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(mcap_builder)
 
-# ── 从 student.proto 生成 C++ 源码 ──
-protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../proto/student.proto)
+# ── 拉取 foxglove-sdk 获取官方 proto 定义（仅下载，不构建） ──
+FetchContent_Declare(
+  foxglove_schemas
+  GIT_REPOSITORY https://github.com/foxglove/foxglove-sdk.git
+  GIT_TAG        main
+  GIT_SHALLOW    TRUE
+)
+FetchContent_GetProperties(foxglove_schemas)
+if(NOT foxglove_schemas_POPULATED)
+  FetchContent_Populate(foxglove_schemas)
+endif()
+
+# ── 从 proto 文件生成 C++ 源码 ──
+protobuf_generate_cpp(STUDENT_SRCS STUDENT_HDRS
+  ${CMAKE_CURRENT_SOURCE_DIR}/../proto/student.proto)
+protobuf_generate_cpp(POINT3_SRCS POINT3_HDRS
+  ${foxglove_schemas_SOURCE_DIR}/schemas/proto/foxglove/Point3.proto)
 
 # ── 构建 reader 可执行文件 ──
-add_executable(mcap_reader main.cpp ${PROTO_SRCS})
+add_executable(mcap_reader main.cpp ${STUDENT_SRCS} ${POINT3_SRCS})
 target_include_directories(mcap_reader PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(mcap_reader PRIVATE mcap protobuf::libprotobuf)

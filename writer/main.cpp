@@ -1,4 +1,4 @@
-// mcap_writer: 将 10 条 Student protobuf 消息写入 mcap 文件
+// mcap_writer: 将 10 条 Student 和 10 条 foxglove Point3 protobuf 消息写入 mcap 文件
 
 #include <mcap/writer.hpp>
 
@@ -6,8 +6,10 @@
 #include <google/protobuf/descriptor.pb.h>
 
 #include "student.pb.h"
+#include "Point3.pb.h"
 
 #include <chrono>
+#include <cmath>
 #include <iostream>
 #include <queue>
 #include <string>
@@ -102,9 +104,49 @@ int main() {
     std::cout << student.DebugString() << std::endl;
   }
 
+  // ── 注册 Point3 Schema（来自 foxglove-sdk） ──
+  mcap::Schema point3Schema(
+      "foxglove.Point3", "protobuf",
+      BuildFileDescriptorSet(foxglove::Point3::descriptor())
+          .SerializeAsString());
+  writer.addSchema(point3Schema);
+
+  // ── 注册 Point3 Channel ──
+  mcap::Channel point3Channel("points", "protobuf", point3Schema.id);
+  writer.addChannel(point3Channel);
+
+  // ── 写入 10 条 Point3 消息 ──
+  std::cout << "\n--- Writing Point3 messages ---\n" << std::endl;
+  for (int i = 0; i < 10; ++i) {
+    foxglove::Point3 pt;
+    pt.set_x(static_cast<double>(i));
+    pt.set_y(std::sin(static_cast<double>(i)));
+    pt.set_z(static_cast<double>(i) * 0.5);
+
+    std::string serialized = pt.SerializeAsString();
+
+    mcap::Message msg;
+    msg.channelId = point3Channel.id;
+    msg.sequence = static_cast<uint32_t>(i);
+    msg.publishTime = now();
+    msg.logTime = msg.publishTime;
+    msg.data = reinterpret_cast<const std::byte*>(serialized.data());
+    msg.dataSize = serialized.size();
+
+    auto res = writer.write(msg);
+    if (!res.ok()) {
+      std::cerr << "Failed to write Point3 message " << i << ": "
+                << res.message << std::endl;
+      writer.terminate();
+      return 1;
+    }
+
+    std::cout << pt.DebugString() << std::endl;
+  }
+
   writer.close();
-  std::cout << "\nSuccessfully wrote 10 student messages to " << outputFile
-            << std::endl;
+  std::cout << "\nSuccessfully wrote 10 Student + 10 Point3 messages to "
+            << outputFile << std::endl;
 
   google::protobuf::ShutdownProtobufLibrary();
   return 0;
