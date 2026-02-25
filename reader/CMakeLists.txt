@@ -19,24 +19,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(mcap_builder)
 
 # ── 从 student.proto 生成 C++ 源码 ──
-set(PROTO_DIR    ${CMAKE_CURRENT_SOURCE_DIR}/../proto)
-set(GENERATED_DIR ${CMAKE_CURRENT_BINARY_DIR}/generated)
-file(MAKE_DIRECTORY ${GENERATED_DIR})
-
-add_custom_command(
-  OUTPUT  ${GENERATED_DIR}/student.pb.h ${GENERATED_DIR}/student.pb.cc
-  COMMAND ${Protobuf_PROTOC_EXECUTABLE}
-          --proto_path=${PROTO_DIR}
-          --cpp_out=${GENERATED_DIR}
-          ${PROTO_DIR}/student.proto
-  DEPENDS ${PROTO_DIR}/student.proto
-  COMMENT "Generating protobuf C++ sources for student.proto (reader)"
-)
+protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../proto/student.proto)
 
 # ── 构建 reader 可执行文件 ──
-add_executable(mcap_reader
-  main.cpp
-  ${GENERATED_DIR}/student.pb.cc
-)
-target_include_directories(mcap_reader PRIVATE ${GENERATED_DIR})
+add_executable(mcap_reader main.cpp ${PROTO_SRCS})
+target_include_directories(mcap_reader PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 target_link_libraries(mcap_reader PRIVATE mcap protobuf::libprotobuf)
