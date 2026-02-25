@@ -3,7 +3,8 @@
 #include <mcap/reader.hpp>
 
 #include "student.pb.h"
-#include "Point3.pb.h"
+#include "foxglove/Point3.pb.h"
+#include "imu.pb.h"
 
 #include <iostream>
 #include <string>
@@ -25,6 +26,7 @@ int main() {
   // ── 遍历所有消息，按 schema 名称分别解析 ──
   int studentCount = 0;
   int point3Count = 0;
+  int imuCount = 0;
   auto messageView = reader.readMessages();
   for (auto it = messageView.begin(); it != messageView.end(); ++it) {
     const auto& schemaName = it->schema->name;
@@ -47,13 +49,22 @@ int main() {
       }
       std::cout << "[Point3] " << pt.DebugString() << std::endl;
       ++point3Count;
+    } else if (schemaName == "demo.Imu") {
+      demo::Imu imu;
+      if (!imu.ParseFromArray(it->message.data,
+                              static_cast<int>(it->message.dataSize))) {
+        std::cerr << "Failed to parse IMU message" << std::endl;
+        continue;
+      }
+      std::cout << "[IMU] " << imu.DebugString() << std::endl;
+      ++imuCount;
     } else {
       std::cerr << "Unknown schema: " << schemaName << std::endl;
     }
   }
 
   std::cout << "Total: " << studentCount << " Student + " << point3Count
-            << " Point3 messages read." << std::endl;
+            << " Point3 + " << imuCount << " IMU messages read." << std::endl;
 
   reader.close();
   google::protobuf::ShutdownProtobufLibrary();

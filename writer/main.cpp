@@ -6,7 +6,8 @@
 #include <google/protobuf/descriptor.pb.h>
 
 #include "student.pb.h"
-#include "Point3.pb.h"
+#include "foxglove/Point3.pb.h"
+#include "imu.pb.h"
 
 #include <chrono>
 #include <cmath>
@@ -144,8 +145,63 @@ int main() {
     std::cout << pt.DebugString() << std::endl;
   }
 
+  // ── 注册 IMU Schema ──
+  mcap::Schema imuSchema(
+      "demo.Imu", "protobuf",
+      BuildFileDescriptorSet(demo::Imu::descriptor()).SerializeAsString());
+  writer.addSchema(imuSchema);
+
+  // ── 注册 IMU Channel ──
+  mcap::Channel imuChannel("imu", "protobuf", imuSchema.id);
+  writer.addChannel(imuChannel);
+
+  // ── 写入 10 条模拟 IMU 消息 ──
+  std::cout << "\n--- Writing IMU messages ---\n" << std::endl;
+  for (int i = 0; i < 10; ++i) {
+    double t = static_cast<double>(i) * 0.01;  // 100Hz采样
+
+    demo::Imu imu;
+
+    // 设置时间戳
+    auto* ts = imu.mutable_timestamp();
+    ts->set_seconds(static_cast<int64_t>(t));
+    ts->set_nanos(static_cast<int32_t>((t - static_cast<int64_t>(t)) * 1e9));
+
+    // 线加速度: 模拟重力 + 微小振动
+    auto* accel = imu.mutable_linear_acceleration();
+    accel->set_x(0.1 * std::sin(t * 10.0));
+    accel->set_y(0.1 * std::cos(t * 10.0));
+    accel->set_z(9.81 + 0.05 * std::sin(t * 5.0));
+
+    // 角速度: 模拟微小旋转
+    auto* gyro = imu.mutable_angular_velocity();
+    gyro->set_x(0.01 * std::sin(t * 3.0));
+    gyro->set_y(0.01 * std::cos(t * 3.0));
+    gyro->set_z(0.005 * std::sin(t * 1.0));
+
+    std::string serialized = imu.SerializeAsString();
+
+    mcap::Message msg;
+    msg.channelId = imuChannel.id;
+    msg.sequence = static_cast<uint32_t>(i);
+    msg.publishTime = now();
+    msg.logTime = msg.publishTime;
+    msg.data = reinterpret_cast<const std::byte*>(serialized.data());
+    msg.dataSize = serialized.size();
+
+    auto res = writer.write(msg);
+    if (!res.ok()) {
+      std::cerr << "Failed to write IMU message " << i << ": " << res.message
+                << std::endl;
+      writer.terminate();
+      return 1;
+    }
+
+    std::cout << imu.DebugString() << std::endl;
+  }
+
   writer.close();
-  std::cout << "\nSuccessfully wrote 10 Student + 10 Point3 messages to "
+  std::cout << "\nSuccessfully wrote 10 Student + 10 Point3 + 10 IMU messages to "
             << outputFile << std::endl;
 
   google::protobuf::ShutdownProtobufLibrary();

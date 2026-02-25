@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package demo;
+
+import "foxglove/Vector3.proto";
+import "google/protobuf/timestamp.proto";
+
+// 模拟 IMU（惯性测量单元）传感器数据
+message Imu {
+  google.protobuf.Timestamp timestamp = 1;
+  foxglove.Vector3 linear_acceleration = 2;  // 线加速度 (m/s²)
+  foxglove.Vector3 angular_velocity = 3;     // 角速度 (rad/s)
+}
